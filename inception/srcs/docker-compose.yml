@@ -1,0 +1,79 @@
+# A Docker-compose file is used to define and manage multi-container Docker applications
+
+# Define all the services (individual containers) in the application
+services:
+  # MariaDB service: a database container
+  mariadb:
+    container_name: mariadb
+    build: ./requirements/mariadb/ # Path to the Dockerfile for building the image
+    volumes:
+      - database:/var/lib/mysql/ # Mount the persistent volume for storing database data
+    networks:
+      - all
+    init: true # Ensure the service initializes properly before running
+    restart: on-failure
+    env_file:
+      - .env # Load environment variables from the .env file
+
+  # WordPress service: a content management system container
+  wordpress:
+    container_name: wordpress
+    build: ./requirements/wordpress/
+    volumes:
+      - wordpress_files:/var/www/inception/
+    networks:
+      - all
+    init: true
+    restart: on-failure
+    env_file:
+      - .env
+    depends_on:
+      - mariadb # Ensure MariaDB service starts before this service
+
+  # Nginx service: a web server for handling requests
+  nginx:
+    container_name: nginx
+    build:
+      context: ./requirements/nginx/
+      args: # Build arguments for the Dockerfile
+        CERT_FOLDER: ${CERT_FOLDER} # Certificate folder (from .env)
+        CERTIFICATE: ${CERTIFICATE} # Certificate file name
+        KEY: ${KEY} # Key file name
+        COUNTRY: ${COUNTRY} # Certificate country
+        STATE: ${STATE} # Certificate state
+        LOCALITY: ${LOCALITY} # Certificate locality
+        ORGANIZATION: ${ORGANIZATION} # Certificate organization
+        UNIT: ${UNIT} # Certificate unit
+        COMMON_NAME: ${COMMON_NAME} # Common name for the certificate
+    ports:
+      - "443:443" # Map port 443 on the host to port 443 in the container (for HTTPS)
+    volumes:
+      - wordpress_files:/var/www/inception/ # Mount the WordPress files volume
+    networks:
+      - all
+    init: true
+    restart: on-failure
+    env_file:
+      - .env
+    depends_on:
+      - wordpress # Ensure WordPress service starts before this service
+
+# Define volumes for persistent data storage
+volumes:
+  database:
+    driver: local # Use the local volume driver
+    driver_opts:
+      type: none # No specific volume type (bind mount)
+      o: bind # Bind the volume to a host directory
+      device: ~/data/database # Host directory for storing database data
+  wordpress_files:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: ~/data/wordpress_files
+
+# Define the network configuration
+networks:
+  all:
+    driver: bridge # Use a bridge network to allow communication between containers

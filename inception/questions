@@ -1,0 +1,14 @@
+How does docker and docker compose work ? 
+
+    - docker is a tools that allows us to run applications in isolated environments called containers.
+    - docker-compose is a toold that allows us to define and manage multi-container application.
+
+why use docker-compose ?
+
+    - Use one file to automatically run multiple containerd instead of having to run each one manually.
+
+benefit of Docker vs VM's ? 
+    - lightweight because they work on the host OS unlike VM's which have separate OS.
+    - portability, can run on all environments unlike VM's which depend on hypervisors and OS compatibility
+    - Startup speed, Containers start in seconds while VM'S take minutes.
+
